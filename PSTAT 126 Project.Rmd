@@ -1,0 +1,376 @@
+---
+title: 'Final Project: Option 2'
+author: "Seth Marceno, Kevin Sandoval, Derek Yan"
+date: "6/9/2019"
+output: pdf_document
+---
+
+\centering
+
+![Welcome to our Project](/Users/SethMarceno/Desktop/PSTAT 126/Final Project/finaltitle.jpg)
+
+\raggedright
+\clearpage
+\tableofcontents
+\newpage
+
+
+
+```{r, include=FALSE}
+load('FinalProject.RData')
+library(car)
+```
+
+#Abstract
+
+In this project, we examined real estate valuation from Sindian District, New Taipei City, Taiwan and looked to see how different predictors and different transformations would affect the price of real estate in this city in Taiwan. We found that the best regression we could do for price was TDate, sqrt(Age), log(Metro), and Latitude as our predictors. We also examined the eight different components of concrete strength, to determine which components were the most significant as predictors. We found that Cement(X1) , Blast Furnace Slag(X2), Fly Ash(X3), Water(X4), Superplasticizer(X5), and Age(X8) were the most significant predictors in determining concrete strength. 
+
+#Problem and Motivation
+
+For the first data set, the information provided is relevant because there are many people who may be impacted by the findings. For example, if someone in Taiwan wanted to purchase real estate in Taiwan, the data we collected and compiled can give an insight into what would cause this person to pay more, or less money for their real estate. In our testing, we found in our best regression model that for every unit (year) that TDate increases, each square meter in the house will increase in price by 1,794 Taiwanese dollars. This is interesting as this predictor on its own, implies that waiting to buy will cost you money. The concrete dataset is a similar representation. The strength of concrete is an integral part of the society we live in today, as sidewalks, roads, and bridges are often made using this material. It is important to distinguiush the important factors that contribute to the overall effect of the strength of concrete. As stated in the abstract, we found that certain predictors play a large role in determining the overall strength of the concrete, which would impact which parts of the construction process should be more heavily focused on and considered.
+
+#Description of Data
+
+The real estate valuation data looks at different predictors and their effect on the price of the houses in that real estate market. In our scenario, the relevant variables that we have are TDate (transaction date), Age, Metro, Latitude. In the Concrete dataset, we examined the predictors effects on the strength of the concrete as a whole. We found are notable variables to be Cement(X1) , Blast Furnace Slag(X2), Fly Ash(X3), Water(X4), Superplasticizer(X5), and Age(X8).
+
+#Questions of Interest
+
+For our first data set, real estate in Taiwan, we wanted to see if the price of the home was dependent on age of the house, distance to metro stations, number of convenience stores, as well as degree of latitude and longitude that the house was located at. Our first step is to test to see whether or not all of these predictors had any significant effect on the price of the house. Once we have found the best fit to predict the price of the house, we can look at our model to see which predictors cause an increase in housing price or a decrease in it. On top of this we can answer the mean price for a house given it is a certain distance from a metro, is a certain age, is located on the West coast ... etc. For our second data set concrete, we wanted to see if the concrete compressive strength was dependent on its makeup. Thus, once we have found the best components of concrete that predict its compressive strength, we are able to see which components increase or decrease its strength. Furthermore, given a certain makeup of the concrete, we will be able to see the mean compressive strength as wel as predict the compressive strenth of all concrete of the same makeup. 
+
+#Regression Methods
+
+To answer our questions of interest, for part 1 with the real estate data set, in order to fit our model we first looked at a scatterplot matrix in order to determine relationships between the predictors and the response, as well as relationships between the predictors themselves. Next, we fit a base model and tested whether or not we should add the variable Metro and/or Longitude. Once we had found our best model, the next step was to determine if the model needed to have its predictors and response transformed. We did this by doing power transform tests for the predictors and Box Cox estimations for the response. For part 2 with the concrete data set, in order to fit our model we used both forward and backward selection with BIC criterion. Once we found our best model we went on to run diagnostics to check if our model assumptions held. To do this we looked at added variable plots to test relations, residual vs. fitted plots to test linearity, scale-invariance plot to test constant variance, as well as Q-Q plot to test normality. 
+
+#Regression Analysis
+
+#Part 1:
+
+Here we will be looking at the Real Estate Valuation Data set:
+
+```{r}
+RealEstate <- read.table('RealEstateValuation.txt')
+Price <- RealEstate$Price
+TDate <- RealEstate$TDate
+Age <- RealEstate$Age
+Stores <- RealEstate$Stores
+Latitude <- RealEstate$Latitude
+Metro <- RealEstate$Metro
+Longitude <- RealEstate$Longitude
+```
+
+##Checking Relationships Between Variables
+
+The first step we will take is to explore explore any relationships between the predictors and response, or between the predictors using the model Price ~ TDate + Age + Stores + Latitude. Based off of intuition, we would expect to see a relationship between Price and Age, as well as Price and Stores. However, we do not expect to see any significant relationships between the predictors TDate, Age, Stores, and Latitude. Now, looking at the scatter plot matrix to see any relationships:
+
+```{r}
+scatterplotMatrix(~Price + TDate + Age + Stores + Latitude)
+```
+
+Here we can see that Price vs. each predictor seems to have some sort of relationship as expected. Looking at the plots comparing our predictors to each other, we see that the relation between TDate and Age, Stores, or Latitude seems to have no significant relationship; simlarly between Age and Stores there seems to be no correlation. Now looking at the relationship between Stores and Latitude, it looks like a normal distribution when Latitude is the predictor and Stores is the response, and a flat line when Stores is the predictor and Latitude is the response. Thus, it seems that given a certain latitude, we may expect there to be more stores around.  
+
+
+##Fitting a Model to Predict Price
+
+Now we will run a regression to see if we can predcit house price using the predictors TDate, Age, Stores, and Latitude. 
+
+```{r}
+fit1 <- lm(Price ~ TDate + Age + Stores + Latitude)
+summary(fit1)
+```
+
+Using the summary we can see that the model for our data is Price = -1.742e+04(TDate) - 3.02e-1(Age) + 1.929(Stores) + 4.078e+02(Latitude). Also, we are given all of the P-values of the individual coefficients. We can see that all coefficients, expect for TDate's main effect are significant at the alpha = 0.01 level. 
+
+Looking at all of the significant coefficients at alpha = 0.01 level, Age, Stores, and Latitude, we find that for every year the house ages, the price will drop 3,020 New Taiwan Dollars/Ping. For every store added to the living circle on foot, the price of the house will rise 19,200 New Taiwan Dollars/Ping. Lastly, for every degree of latitude added, the price of the house will rise 4,078,00 New Taiwan Dollars/Ping.
+
+
+##Testing To add Metro and/or Longitude
+
+Now we will preform partial F-Tests to test out if Metro and Longitude should be added to the model. 
+
+H0:The coeffiencet for Longitude is 0 vs. Ha:The coefficient for Longitude is not 0
+at level alpha = 0.05
+
+```{r}
+fit2 <- lm(Price ~ TDate + Age + Stores + Latitude + Longitude)
+summary(fit2)
+```
+
+Thus based off of our T-test, we find our test statistic = 6.033, with a null distribution of T_n-p-1 = T_408. Our P-value is 3.60e-09 which is less than our alpha = 0.05; thus, we reject our null hypothesis. 
+
+
+H0:The coeffiencet for Metro is 0 vs. Ha:The coefficient for Metro is not 0
+at level alpha = 0.05
+
+```{r}
+fit3 <- lm(Price ~ TDate + Age + Stores + Latitude + Metro)
+summary(fit3)
+```
+
+Thus based off of our T-test, we find our test statistic = -8.887, with a null distribution of T_n-p-1 = T_408. Our P-value is 2e-16 which is less than our alpha = 0.05; thus, we reject our null hypothesis. 
+
+
+H0:The coeffiencet for longitude is 0 with metro in our model vs. Ha: The coefficient for longitude is not 0 with metro is in our model
+at level alpha = 0.05
+
+```{r}
+fit4 <- lm(Price ~ TDate + Age + Stores + Latitude + Metro + Longitude)
+summary(fit4)
+```
+
+Thus based off of our T-test, we find our test statistic = -0.256, with a null distribution of T_n-p-1 = T_408. Our P-value is 0.79829 which is not less than our alpha = 0.05; thus, we fail reject our null hypothesis. 
+
+Since we have found that the main effect for Metro is significant both with and without Longitude in the model, whereas Longitude is only significant when Metro is not in the model, we have determined our best model is Price ~ TDate + TDate + Age + Latitude + Metro. 
+
+##Considering Another Model
+
+Here we will compare two different models, Price ~ TDate + Age + Metro + Latitude and Price ~ TDate + Age + Stores + Latitude
+
+```{r}
+fit5 <- lm(Price ~ TDate + Age + Metro + Latitude)
+summary(fit1)
+summary(fit5)
+```
+
+Based off of our summary table we can see that fit1 has a correlation coefficient of 0.5015 whereas fit5 has a correlation coefficient of 0.5448. Since our model fit5 (Price ~ TDate + Age + Metro + Latitude) explains more of the variance in house price given its predictors, we will use this model. On top of this, we see that the main effect of TDate is also significant at a high level in fit5 than in fit1.  
+
+###Transforming the Predictors
+
+Since the predictor Age contains values that are 0, and we cannot power transform or log transform these predictors. Therefore, we must do some manipulation to make sure our predictors are stricly non-zero. 
+
+```{r}
+RealEstate$Age <- with(RealEstate, (Age + 0.01))
+```
+
+Now we test to see if we need to power transform:
+
+```{r}
+RE.pt <- powerTransform(cbind(TDate, Age, Metro, Latitude) ~ 1, RealEstate)
+summary(RE.pt)
+```
+
+Here we can see all predictors except for Age and Metro contain 1, thus we must look to see what transformation of age and Metro we need. 
+
+```{r}
+testTransform(RE.pt, lambda = c(1, 0.5, 0, 1))
+```
+
+Thus if we take the square root of Age and a log transformation of Metro, 
+
+```{r}
+sqrt_Age <- sqrt(Age)
+RE_trsf = with(RealEstate, data.frame(Price, TDate, sqrt(Age), log(Metro), Latitude))
+pairs(RE_trsf)
+```
+
+Now we can see linear relationships of all of the predictors with the response. 
+
+###Transforming the Response
+
+Now that we have found transformations for our predictors, we will look to see if we need to tranform our response. 
+
+```{r}
+boxCox(fit5)
+```
+
+Since we see that 0 is within our interval, we choose lambda = 0 and log transform our response Price. Hence, our model 
+looks like log(Price) ~ TDate + sqrt(Age) + log(Metro) + Latitude.
+
+```{r}
+final.fit <- lm(log(Price) ~ TDate  + sqrt(Age) + log(Metro) + Latitude)
+summary(fit5)
+summary(final.fit)
+```
+
+Comparing our fit from before our transformation on Price, Age, and Metro and after, we can see a large increase in our correlation coefficient. Before it was 0.5448, and after taking log(Price), sqrt(Age), and log(Metro), it is 0.7218. Hence we saw a large imporovemnet in our model after doing our transformations. 
+
+##Summary
+
+Based off of our regressions, we have found that, within our data set, the active regressors to calculate the expected log(price) of a house in Sindian District, New Taipei City, Taiwan, are best predicted by TDate, sqrt(Age), log(Metro), and Latitude. Some interesting results that we found in fitting our model was the fact that longitude was not significant in our model, given that metro. This could be becuase when you account for metro stations in the area, given the layout of Taiwan, on the Western shore, there are a lot of cities/urban areas that span the entire length of the country North to South. Since this entire Urban area is connected and runs longitude wise of the country, once we account for availability in transportation by metro in these areas, difference in longitude becomes less of an issue. Therefore, since movement is accounted for, difference in price does not seem to be determined by longitude location. 
+
+
+#Part 2:
+
+Here we will be looking at the data set 'Concrete' consisting of 8 predictors X1(Cement), X2(Blast Furnace Slag), X3(Fly Ash), X4(Water), X5(Superplasticizer), X6(Coarse Aggregate), X7(Fine Aggregate), X8(Age) and 1 response Y(Concrete Compressive Strength). 
+
+```{r}
+Concrete <- read.table('Concrete.txt')
+X1 <- Concrete$X1
+X2 <- Concrete$X2
+X3 <- Concrete$X3
+X4 <- Concrete$X4
+X5 <- Concrete$X5
+X6 <- Concrete$X6
+X7 <- Concrete$X7
+X8 <- Concrete$X8
+Y <- Concrete$Y
+```
+
+##Forward Model Selection
+
+To find our model we will use forward selection using BIC as a criterion function: 
+
+```{r}
+m0 <- lm(Y ~ 1)
+full <- ~ X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8
+n <- length(Y)
+
+fit6 <- step(m0, full, direction = 'forward', k = log(n))
+```
+
+The result of forwards BIC model selection is the model: Y ~ X1 + X5 + X8 + X2 + X4 + X3. 
+
+##Diagnostic Checks
+
+```{r}
+scatterplotMatrix(~ Y + X1 + X5 + X8 + X2 + X4 + X3)
+```
+
+Here is seems that the predictors all have a linear relationship with the response variable. Hence, we will continue with diagnostics to make sure our model assumptions hold.
+
+###Added Variable Plot
+
+```{r}
+avPlots(fit6)
+```
+
+
+The marginal relationships are shown in the Added Variable plots: the plots regarding X1, X3, X2 seem like better linear fits, whilst the plot regarding X5 has a good looking linear, it may not tell us anything useful because the fit is around the the line Y|Others = 0.  The plots regarding X4 and X8 seem to have a quadratic curve to them.  We may or may not take a closer look at this later. 
+
+
+
+Now in order to test whole model assumptions, we will be looking at a Residual vs. Fitted plot to test lineariy, scale-location to test constant variance, and QQ plots for normality of our data. 
+
+###Residual Vs. Fitted for Linearity
+
+```{r}
+plot(fit6, which = 1)
+```
+
+
+From the Residual Vs. Fitted Values, we observe some clustering on the left side which leads to the conclusion that this does voilate the linearity assumption. 
+
+
+###Scale-Location for constant variance
+
+```{r}
+plot(fit6, which = 3)
+```
+
+Again we see some clustering on the left, thus we may see a voilation of constant variance in our model. To test to see if there is an effect of mean on the variance we will run a non-constant variance test.
+
+```{r}
+ncvTest(fit6)
+```
+
+Thus, since we see a significant P-Value, we determine that variance increases as a function of the fitted values. Therefore in order to fix this issue of non-constant variance, we would have to put weights on the fitted values as 1/fitted values.  
+
+###Q-Q Plot to Test Normality
+
+```{r}
+plot(fit6, which = 2)
+```
+
+It looks like observations 225, 384, and 382 may cause this to be a slightly heavy-tailed plot.  Nonetheless, it violates the normality assumption since the plot is right-skewed.
+
+##Finding Influential Points
+
+```{r}
+influenceIndexPlot(fit6, vars = c('hat', 'cook'))
+```
+
+Here we see the data point 57 has a high cooks distance as well as a high hat value/leverage, thus it is the most influential point. Similarly point 611 has a large cooks distance. Since these points have high influence, we may consider either adding predictors in our model to account for these points, or even removing them altogether.
+
+##Estimating the Mean Response
+
+Suppose that we want to predict the mean compressive strength of concrete with the makeup of 149kg per meter cubed of cement, 118kg per meter cubed of blast furnace slag, 92kg per meter cubed of fly ash, 183kg per meter cubed of water, 7kg per meter cubed of superplasticizer, and 28 days old. 
+
+```{r}
+x.new <- data.frame(X1 = 149, X2 = 118, X3 = 92, X4 = 183, X5 = 7, X8 = 28)
+predict(fit6, newdata = x.new, interval = "confidence", level = 0.95)
+```
+
+We see an estimated mean concrete compressive strength of 26.17 MPa with a lower bound of 25.12 MPa and an upper bound of 27.22 MPa with 95% confidence.  
+
+##Predicting New Responses
+
+Now looking at the same concrete as above, we want to predict that compressive strength that this makeup gives us for all concrete of this makeup. 
+
+```{r}
+predict(fit6, newdata = x.new, interval = "predict", level = 0.95)
+```
+
+Thus we can predict that the compressive strength for all concrete with this makeup will lie between 5.72Mpa and 46.62 MPa with 95% confidence. 
+
+
+##Backward Model Selection
+
+```{r}
+m1<-update(m0,full)
+
+fit7 <- step(m1, scope = c(lower= ~X1), direction = 'backward', k = log(n))
+```
+
+The result of the backwards BIC model selection is the model: Y ~ X1 + X5 + X8 + X2 + X4 + X3. 
+
+##Diagnostic Checks
+
+###Scatterplot matrix and AV plot:
+
+```{r}
+scatterplotMatrix(~ Y + X1 + X5 + X8 + X2 + X4 + X3)
+avPlots(fit7)
+```
+
+We can see marginal relationships from the added variable plots for each predictor given all others are held constant.  Clearly, they all seem to have a linear relationship of some sort.  However, let it be noted that Y~X8|others and Y~X4|others appear to have a slight quadratic curve to it.  
+
+
+
+We will use residual plots to check our assumptions of the model (linearity, constant variance, normality):
+
+```{r}
+plot(fit7, which = 1)
+plot(fit7, which = 2)
+plot(fit7, which = 3)
+```
+
+The residuals versus fitted plot shows clustering on the left which leads to the conclusion that it is not as linear as we would like it to be.  The scale-location plot also shows slightly more clustering on the left than right and seems to slowly spread out from left to right; this violates the constant variance assumption and we will take a closer look at a different time, not now, be patient. There does not seem to be any heavy tails in our QQ plot but the plot is right-skewed, in which we will also take a closer look at a time that is not now. 
+
+
+###Outlier Test:
+
+```{r}
+outlierTest(fit7)
+```
+
+Here, we will look at influence by examining the hat-values and Cook's distance:
+
+```{r}
+influenceIndexPlot(fit7, vars = c('hat', 'Cook'))
+```
+
+From the two diagnostic plots, we can see that observation 57 has large leverage and Cook's distance, thus it is the most influential point. I would probably remove this observation to better the model.  
+
+
+We got the same model as we did part a.
+
+
+
+##Summary
+
+We took a model using BIC criterion and applied both forwards and backwards selection algorithms to find the best model for predicting Concrete Compressive Strength (MPa). After finding the best model, Y ~ X1 + X5 + X8 + X2 + X4 + X3, which was the same for forwards and backwards selection (but had different ordering), we checked linearity, constant variance, and normality with residual and QQ plots.  We found some leverages and influences and decided what data to remove to better the model.  We then calculated a confidence and prediction interval which we interpretated directly after. 
+
+
+
+
+
+
+
+
+#Conclusion
+
+[HERE WE CONCLUDE STUFF ABOUT THINGS]
+
+```{r, include=FALSE}
+save.image('FinalProject.RData')
+```
+
