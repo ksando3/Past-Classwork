@@ -1,0 +1,162 @@
+---
+title: "PSTAT 126 Homework 7"
+author: "Kevin Sandoval"
+date: "June 2, 2019"
+output:
+  pdf_document: default
+
+---
+```{r message=FALSE, warning=FALSE, include=FALSE}
+load('126HW7.RData')
+library(car)
+
+```
+
+# Question 1
+
+```{r message=FALSE, warning=FALSE}
+library(alr4)
+data("mantel")
+data("Highway")
+```
+
+```{r message=FALSE, warning=FALSE}
+y <- mantel$Y
+x1 <- mantel$X1
+x2 <- mantel$X2
+x3 <- mantel$X3
+
+f = ~ x1 + x2 + x3
+
+m0 = lm(y ~ 1, mantel)
+
+m.forward = step(m0, f, direction = "forward")
+
+n = 5
+step(m0, f, direction = "forward", k = log(n), trace = 0)  ## BIC
+
+m1 = update(m0, f)
+
+m.backward = step(m1, scope = c(lower = ~ 1), direction = "backward")
+
+step(m1, scope = c(lower = ~ 1), direction = "backward", k = log(n), trace = 0)  ## BIC
+```
+
+Forward selection results in only x3 for AIC and BIC, while backwards selection results in x1 + x2 for both AIC and BIC.
+
+
+# Question 2
+
+```{r}
+sighat <- 4.0
+p <- 4
+n <- 54
+```
+
+## Case 1
+```{r}
+ei1 <- 1.000
+hii1 <- 0.900
+ri1 <- ei1 / (sighat* sqrt(1 - hii1))
+Di1 <- ((ri1*ri1)/p) * (hii1/ (1-hii1))
+ti1 <- ri1 * ((n-p-1)/(n-p-ri1*ri1))^(1/2)
+ri1
+Di1
+ti1
+```
+
+## Case 2
+```{r}
+ei2 <- 1.732
+hii2 <- 0.750
+ri2 <- ei2 / (sighat* sqrt(1 - hii2))
+Di2 <- ((ri2*ri2)/p) * (hii2/ (1-hii2))
+ti2 <- ri2 * ((n-p-1)/(n-p-ri2*ri2))^(1/2)
+ri2
+Di2
+ti2
+```
+
+## Case 3
+```{r}
+ei3 <- 9.000
+hii3 <- 0.250
+ri3 <- ei3 / (sighat* sqrt(1 - hii3))
+Di3 <- ((ri3*ri3)/p) * (hii3/ (1-hii3))
+ti3 <- ri3 * ((n-p-1)/(n-p-ri3*ri3))^(1/2)
+ri3
+Di3
+ti3
+```
+
+## Case 4
+```{r}
+ei4 <- 10.295
+hii4 <- 0.185
+ri4 <- ei4 / (sighat* sqrt(1 - hii4))
+Di4 <- ((ri4*ri4)/p) * (hii4/ (1-hii4))
+ti4 <- ri4 * ((n-p-1)/(n-p-ri4*ri4))^(1/2)
+ri4
+Di4
+ti4
+```
+
+
+```{r}
+ti1
+ti2
+ti3
+ti4
+qt(p = 0.975, df = 49, lower.tail = TRUE)
+```
+
+As we can see from the quartile function, ti3 and ti4 would be infuential points, as the test statistics are higher than the critical value.
+
+# Question 3
+
+```{r}
+library(alr4)
+data("lathe1")
+```
+
+## Part A
+
+```{r}
+Speed <- lathe1$Speed
+Feed <- lathe1$Feed
+Life <- lathe1$Life
+fit1 <- lm(formula = Life ~ Speed + Feed + I(Speed^2) + I(Feed^2) + Speed*Feed )
+best.lambda <- boxCox(fit1)
+```
+
+From the plot, we can see that 0 is in our interval, so then the appropriate scale for the response is the logarithmic scale.
+
+## Part B
+
+```{r}
+fit2 <- lm(formula = log(Life) ~ Speed + Feed + I(Speed^2) + I(Feed^2) + Speed*Feed )
+influenceIndexPlot(fit2)
+```
+
+From this diagnostic plot, we can see that points 9 and 10 have the highest Cook's Distance, so we will remove them from our data.
+
+```{r}
+lathe2 <- lathe1[-c(9,10),]
+Speed2 <- lathe2$Speed
+Feed2 <- lathe2$Feed
+Life2 <- lathe2$Life
+fit3 <- lm(formula = log(Life2) ~ Speed2 + Feed2 + I(Speed2^2) + I(Feed2^2) + Speed2*Feed2)
+#influenceIndexPlot(fit3)
+#View(lathe1)
+#View(lathe2)
+summary(fit2)
+summary(fit3)
+```
+
+Since the second model has a slightly higher R-Squared value, we can say that it is a slightly better fit for the data. Removing the points seems to have a slightly positive effect for the fit. 
+
+
+
+```{r, include=FALSE}
+save.image('126HW7.RData')
+```
