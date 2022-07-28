@@ -1,7 +1,7 @@
 ---
-title: 'Final Project: Option 2'
-author: "Seth Marceno, Kevin Sandoval, Derek Yan"
-date: "6/9/2019"
+title: 'Real Estate Evaluation'
+author: "Kevin Sandoval"
+date: "6/9/2022"
 output: pdf_document
 ---
 \raggedright
